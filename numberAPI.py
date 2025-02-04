@@ -1,58 +1,61 @@
 import json
-import re
+import math
 import requests
 
 def is_prime(n):
+    """Check if a number is prime"""
     if n < 2:
         return False
-    for i in range(2, int(n**0.5) + 1):
+    for i in range(2, int(math.sqrt(n)) + 1):
         if n % i == 0:
             return False
     return True
 
 def is_perfect(n):
-    if n < 2:
+    """Check if a number is a perfect number"""
+    if n < 1:
         return False
-    return sum(i for i in range(1, n) if n % i == 0) == n
-
-def is_armstrong(n):
-    digits = [int(d) for d in str(n)]
-    length = len(digits)
-    return sum(d ** length for d in digits) == n
+    return sum([i for i in range(1, n) if n % i == 0]) == n
 
 def digit_sum(n):
-    return sum(int(d) for d in str(n))
+    """Calculate the sum of digits"""
+    return sum(int(digit) for digit in str(abs(int(n))))  # Use abs() to handle negatives
 
 def get_fun_fact(n):
-    url = f"http://numbersapi.com/{n}/math?json"
+    """Fetch fun fact from Numbers API"""
     try:
-        response = requests.get(url)
-        response.raise_for_status()
-        return response.json().get("text", "No fun fact available.")
-    except requests.RequestException:
+        response = requests.get(f"http://numbersapi.com/{n}/math?json")
+        if response.status_code == 200:
+            return response.json().get("text", "No fun fact found.")
         return "No fun fact available."
+    except:
+        return "Could not fetch fun fact."
 
 def lambda_handler(event, context):
     try:
-        # Safely get query parameters
-        query_params = event.get("queryStringParameters", {}) or {}
-        if "number" not in query_params:
-            raise ValueError("Missing 'number' parameter")
-        
-        number_str = query_params["number"]
-        # Validate input with regex (non-negative integer)
-        if not re.fullmatch(r'^\d+$', number_str):
-            raise ValueError("Invalid input: not a number")
-        
-        number = int(number_str)
+        # Get query parameter
+        number_str = event.get("queryStringParameters", {}).get("number", None)
 
-        # Calculate properties
+        # Validate input
+        if number_str is None or not number_str.replace("-", "").replace(".", "").isdigit():
+            return {
+                "statusCode": 400,
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps({"number": number_str, "error": True})
+            }
+
+        number = float(number_str) if "." in number_str else int(number_str)  # Handle floats
+
+        # Determine properties
         properties = []
-        if is_armstrong(number):
-            properties.append("armstrong")
-        properties.append("even" if number % 2 == 0 else "odd")
+        if number % 2 == 0:
+            properties.append("even")
+        else:
+            properties.append("odd")
 
-        # Build response
+        if number == sum(int(digit) ** len(str(number)) for digit in str(abs(int(number)))):  # Armstrong check
+            properties.insert(0, "armstrong")
+
         response = {
             "number": number,
             "is_prime": is_prime(number),
@@ -72,25 +75,9 @@ def lambda_handler(event, context):
             },
             "body": json.dumps(response)
         }
-
-    except ValueError as e:
-        # Handle invalid input
-        return {
-            "statusCode": 400,
-            "body": json.dumps({
-                "number": event.get("queryStringParameters", {}).get("number", "invalid"),
-                "error": True,
-                "message": str(e)
-            }, indent=4),
-            "headers": {"Content-Type": "application/json"}
-        }
     except Exception as e:
-        # Catch-all for unexpected errors
         return {
             "statusCode": 500,
-            "body": json.dumps({
-                "error": True,
-                "message": "Internal server error"
-            }),
-            "headers": {"Content-Type": "application/json"}
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({"error": str(e)})
         }
