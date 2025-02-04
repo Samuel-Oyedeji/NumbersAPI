@@ -88,37 +88,6 @@ This guide walks you through deploying the Number Classification API using AWS L
    ```
 3. Ensure you receive a valid JSON response.
 
-### **6. Update IAM Role (If Needed)**
-If you encounter permission errors, update the IAM role attached to the Lambda function:
-1. Go to **IAM** → **Roles**.
-2. Find the role associated with your Lambda function.
-3. Attach policies for **AWSLambdaBasicExecutionRole** and **AmazonAPIGatewayInvokeFullAccess**.
-
----
-
-## Version Control & Repository Structure
-Ensure your code is hosted on **GitHub** with a well-structured repository:
-```bash
-NumberClassificationAPI/
-│-- lambda_function.py  # Main API logic
-│-- requirements.txt    # Dependencies
-│-- README.md           # Documentation
-│-- deploy.sh           # Deployment script (optional)
-│-- tests/              # Test cases
-```
-
-### **GitHub Setup Steps**
-1. Create a GitHub repository.
-2. Clone the repo locally:
-   ```sh
-   git clone https://github.com/yourusername/NumberClassificationAPI.git
-   ```
-3. Add your project files and commit:
-   ```sh
-   git add .
-   git commit -m "Initial commit"
-   git push origin main
-   ```
 
 ---
 
